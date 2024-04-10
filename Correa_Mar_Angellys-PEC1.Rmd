@@ -1,0 +1,150 @@
+---
+title: "PEC1 Análisis de Datos ómicos"
+subtitle: "Efecto del ácido araquidónico sobre las células cancerosas de próstata"
+author: "Angellys Correa Marañon"
+output:
+  html_document:
+    code_folding: show
+    toc: yes
+    toc_float: 
+      toc_collapsed: yes
+    toc_depth: 3
+    theme: cosmo
+    highlight: textmate
+    number_sections: yes
+editor: 
+  markdown: 
+    wrap: 72
+self_contained: true
+---
+
+```{r include=FALSE}
+require(knitr)
+opts_chunk$set(
+concordance=FALSE, echo=TRUE,  warning=FALSE, error=FALSE, message=FALSE)
+```
+
+# Introducción
+
+El presente análisis resulta del trabajo con herramientas como Bioconductor, los expressionSet y la exploración de datos ómicos. Para esto se seleccionará un estudio de microarrays, descargandolo haciendo uso del paquete GEOquery, determinando la estructura y el diseño del estudio y posteriormente realizando un análisis exproratorio univariante y multivariante.
+
+El estudio seleccionado es sobre el efecto del ácido araquidónico sobre las células cancerosas de próstata PC-3 incubadas con ácido araquidónico (AA), el cual es un ácido graso omega-6 que induce la proliferación de células cancerosas. 
+
+
+# Objetivos
+
+- Utilizar Bioconductor para el análisis y visualización de datos ómicos por medio del lenguaje de programación R.
+- Obtener un expressionSet de los datos de un estudio utilizando el paquete GEOquery.
+- Realizar un estudio exploratorio univariante y multivariante con los datos descargados.
+
+
+# Métodos
+
+El presente análisis corresponde a la información de un dataset de GEO (Gene Expression Omnibus) seleccionado de la lista del documento GEOdatasetsUpdatedNov2022.xls, que contiene una lista de registros de GEO.
+
+```{r loadreadxl}
+library(readxl) 
+GEOdat <- read_excel("GEOdatasets_updatedNov2022.xls")
+head(GEOdat)
+```
+
+Para obtener los datos se puede utilizar los identificadores "Dataset" y "Serie". Es este caso, selecciono la Serie GSE3737, correspondiente a un estudio sobre el efecto del ácido araquidónico sobre las células cancerosas de próstata. Los datos se leen y descargan desde GEO.
+
+```{r readGEOquery}
+library(GEOquery)
+gse <- getGEO("GSE3737", GSEMatrix = TRUE)
+```
+
+Se determina la estructura y diseño del estudio:
+
+```{r estructura}
+class(gse)
+length(gse)
+gse[[1]]
+```
+
+Viasualizamos en ExpressionSet de Los datos se extraen de la lista que los contiene en forma de objeto de clase ExpressionSet, además de visualizar la matriz de expresión y las covariables, econtrando que el conjunto de datos de la expresión génica GSE3737 contiene 8 identificadores de muestras con 22283 características y 30 variables:
+
+```{r creaexpressionSet}
+myEset <- gse[[1]]
+class(myEset)
+head(exprs(myEset))
+colnames(pData(myEset))
+```
+
+
+Para la representación y análisis exploratorio de los datos se implementa un análisis estadísitco univariante y multuvariante, llevado a cabo a través de la implementación de códigos con RStudio.
+
+
+# Resultados: Análisis exploratorio de datos
+
+A continuación se presenta una primera visión o resumen básico estadístico del dataset y la representación de las muestras en histogramas y diagramas de cajas.
+
+```{r summarize, print=FALSE,echo=TRUE}
+round(apply(myEset,2, summary))
+```
+
+```{r readggplot2}
+library(ggplot2)
+```
+
+```{r histArray0}
+cap <- par(mfrow=c(2,4))
+for (i in 1:ncol(exprs(myEset))) {
+  hist(exprs(myEset)[,i], main = colnames(exprs(myEset))[i])
+}
+par(cap)
+```
+
+```{r boxplot2}
+logX <- log2(exprs(myEset))
+groupColors <- c(rep("red", 4), rep("blue", 4))
+boxplot(logX, col=groupColors, main="log Expression values for\n 8 samples, two groups",
+    xlab="Samples",
+    ylab="logExpression", las=2, cex.axis=0.7, cex.main=0.7)
+```
+
+
+# Apéndices
+
+Código completo:
+
+library(readxl) 
+
+GEOdat <- read_excel("GEOdatasets_updatedNov2022.xls")
+
+head(GEOdat)
+
+library(GEOquery)
+
+gse <- getGEO("GSE3737", GSEMatrix = TRUE)
+
+class(gse)
+
+length(gse)
+
+gse[[1]]
+
+myEset <- gse[[1]]
+
+class(myEset)
+
+head(exprs(myEset))
+
+colnames(pData(myEset))
+
+round(apply(myEset,2, summary))
+
+library(ggplot2)
+
+cap <- par(mfrow=c(2,4))
+for (i in 1:ncol(exprs(myEset))) {
+  hist(exprs(myEset)[,i], main = colnames(exprs(myEset))[i])
+}
+par(cap)
+
+logX <- log2(exprs(myEset))
+groupColors <- c(rep("red", 4), rep("blue", 4))
+boxplot(logX, col=groupColors, main="log Expression values for\n 8 samples, two groups",
+    xlab="Samples",
+    ylab="logExpression", las=2, cex.axis=0.7, cex.main=0.7)
